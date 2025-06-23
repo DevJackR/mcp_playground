@@ -17,14 +17,13 @@ from contextlib import AsyncExitStack
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, TextIO, Union
 
-from google.adk.tools.mcp_tool.mcp_session_manager import MCPSessionManager, SseServerParams, StreamableHTTPServerParams
+from google.adk.tools.mcp_tool.mcp_session_manager import MCPSessionManager, SseServerParams
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.base_toolset import ToolPredicate
 from mcp import StdioServerParameters
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
-from mcp.client.streamable_http import streamablehttp_client
 
 # Configure your desired timeout for stdio-based MCP connections
 CUSTOM_STDIO_TIMEOUT_SECONDS = 180  # 180 seconds (3 minutes) for initial model downloads
@@ -41,7 +40,7 @@ class CustomMcpSessionManager(MCPSessionManager):
 
     def __init__(
         self,
-        connection_params: Union[StdioServerParameters, SseServerParams, StreamableHTTPServerParams],
+        connection_params: Union[StdioServerParameters, SseServerParams],
         errlog: TextIO = sys.stderr,
     ):
         """Initialize the custom session manager with all required attributes."""
@@ -77,16 +76,6 @@ class CustomMcpSessionManager(MCPSessionManager):
                     headers=self._connection_params.headers,
                     timeout=self._connection_params.timeout,
                     sse_read_timeout=self._connection_params.sse_read_timeout,
-                )
-            elif isinstance(self._connection_params, StreamableHTTPServerParams):
-                client = streamablehttp_client(
-                    url=self._connection_params.url,
-                    headers=self._connection_params.headers,
-                    timeout=timedelta(seconds=self._connection_params.timeout),
-                    sse_read_timeout=timedelta(
-                        seconds=self._connection_params.sse_read_timeout
-                    ),
-                    terminate_on_close=self._connection_params.terminate_on_close,
                 )
             else:
                 raise ValueError(
@@ -148,7 +137,7 @@ class CustomMCPToolset(MCPToolset):
 
     def __init__(
         self,
-        connection_params: Union[StdioServerParameters, SseServerParams, StreamableHTTPServerParams],
+        connection_params: Union[StdioServerParameters, SseServerParams],
         tool_filter: Union[ToolPredicate, List[str], None] = None,
         errlog: TextIO = sys.stderr,
     ):
